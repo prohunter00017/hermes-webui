@@ -1,0 +1,30 @@
+name: Sync upstream hermes-webui
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+      - name: Merge upstream master
+        run: |
+          git config user.name "sync-bot"
+          git config user.email "sync-bot@users.noreply.github.com"
+          git remote add upstream https://github.com/nesquena/hermes-webui.git
+          git fetch upstream master
+          if git merge --no-edit upstream/master; then
+            git push origin master
+            echo "synced ok"
+          else
+            echo "::error::Upstream merge conflict — needs manual resolution"
+            exit 1
+          fi
